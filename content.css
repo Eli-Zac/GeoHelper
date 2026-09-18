@@ -1,0 +1,175 @@
+/* Only used as a fallback when the site's own bottom-left button bar
+   isn't found (e.g. GeoGuessr's DOM differs from OpenGuessr's). When
+   docked into that bar, the button uses the site's own "standard-button
+   white" classes and needs no styling from here. */
+.gg-shot-floating {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 999999;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  background: rgba(30, 34, 44, 0.85);
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+}
+
+.gg-shot-floating:hover {
+  background: rgba(45, 50, 63, 0.9);
+}
+
+#gg-shot-copy-btn:active {
+  transform: translateY(1px);
+}
+
+#gg-shot-copy-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+#gg-shot-copy-toast {
+  position: fixed;
+  bottom: 68px;
+  left: 16px;
+  z-index: 999999;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: rgba(30, 34, 44, 0.9);
+  color: #fff;
+  font: 600 13px sans-serif;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+
+#gg-shot-copy-toast.gg-shot-toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Shown while the copy is still encoding/writing after capture. */
+#gg-shot-copy-btn.gg-shot-busy > svg {
+  display: none;
+}
+
+#gg-shot-copy-btn.gg-shot-busy::before {
+  content: "";
+  display: inline-block;
+  box-sizing: border-box;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  vertical-align: middle;
+  animation: gg-shot-spin 0.7s linear infinite;
+}
+
+@keyframes gg-shot-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Safe mode switch, docked next to Locate/Guess in OpenGuessr's bar. */
+.gg-offset-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding-left: 4px;
+  color: #fff;
+  font-family: inherit; /* the site's own font (Barlow) */
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  cursor: pointer;
+  user-select: none;
+}
+
+.gg-offset-switch input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.gg-offset-track {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.35);
+  transition: background 0.15s ease;
+}
+
+.gg-offset-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+  transition: transform 0.15s ease;
+}
+
+.gg-offset-switch input:checked + .gg-offset-track {
+  background: #3fb950;
+}
+
+.gg-offset-switch input:checked + .gg-offset-track .gg-offset-thumb {
+  transform: translateX(14px);
+}
+
+.gg-offset-switch input:focus-visible + .gg-offset-track {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* The bar's own `gap` spaces these; just keep them from being squeezed. */
+.gg-offset-track,
+#gg-shot-locate-btn {
+  flex-shrink: 0;
+}
+
+/* OpenGuessr gives the Guess bar a fixed width sized for Guess alone.
+   With Safe mode + Locate added, let it grow to fit them, but never
+   below the site's own width so it still lines up with the map. */
+.bar-menu:has(> #gg-shot-locate-btn) {
+  width: fit-content;
+  min-width: max(calc(20% - 12px), 200px);
+}
+
+/* Autoplay toggle, docked beside OpenGuessr's Menu button. Reuses the
+   Safe mode switch's track/thumb, driven by aria-pressed instead of a
+   checkbox. */
+.gg-autoplay {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.gg-autoplay-label {
+  min-width: 5.5em; /* room for the "Autoplay 12s" countdown without jitter */
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.gg-autoplay[aria-pressed="true"] .gg-offset-track {
+  background: #3fb950;
+}
+
+.gg-autoplay[aria-pressed="true"] .gg-offset-thumb {
+  transform: translateX(14px);
+}

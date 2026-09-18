@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate manifest.json is well-formed
+        run: jq empty manifest.json
+
+      - name: Check required manifest fields
+        run: |
+          for field in manifest_version name version; do
+            value=$(jq -r --arg f "$field" '.[$f] // empty' manifest.json)
+            if [ -z "$value" ]; then
+              echo "manifest.json is missing required field: $field" >&2
+              exit 1
+            fi
+          done
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Check JS syntax
+        run: |
+          for f in background.js content.js locate.js; do
+            node --check "$f"
+          done

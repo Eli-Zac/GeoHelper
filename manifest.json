@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "GeoHelper",
+  "version": "1.0.0",
+  "description": "Adds buttons on GeoGuessr and OpenGuessr to copy a screenshot of the current view to your clipboard, and (OpenGuessr) to place the guess pin at the round's location.",
+  "permissions": [
+    "debugger",
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://www.geoguessr.com/*",
+        "*://openguessr.com/*",
+        "*://www.openguessr.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://openguessr.com/*",
+        "*://www.openguessr.com/*"
+      ],
+      "js": [
+        "locate.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    }
+  ]
+}
