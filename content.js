@@ -16,8 +16,13 @@
   };
 
   let settings = { ...DEFAULT_SETTINGS };
-  chrome.storage.local.get(SETTINGS_STORAGE_KEY, (items) => {
-    settings = { ...DEFAULT_SETTINGS, ...(items[SETTINGS_STORAGE_KEY] || {}) };
+  // Opening/saving the settings modal awaits this so a click right after
+  // page load can't open (and then overwrite) it with stale defaults.
+  const settingsReady = new Promise((resolve) => {
+    chrome.storage.local.get(SETTINGS_STORAGE_KEY, (items) => {
+      settings = { ...DEFAULT_SETTINGS, ...(items[SETTINGS_STORAGE_KEY] || {}) };
+      resolve();
+    });
   });
 
   const SLIDERS_SVG =
@@ -133,9 +138,10 @@
     btn.className = "standard-button white navigation-button large-button";
     btn.title = "GeoHelper settings";
     btn.innerHTML = SLIDERS_SVG + '<span style="margin-left: 6px;">GeoHelper</span>';
-    btn.addEventListener("click", (e) => {
+    btn.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
+      await settingsReady;
       openSettingsModal();
     });
     navBox.appendChild(btn);
@@ -888,9 +894,15 @@
     }
 
     settings = { offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS };
-    chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings });
-    closeSettingsModal();
-    showToast("GeoHelper: settings saved");
+    chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings }, () => {
+      if (chrome.runtime.lastError) {
+        errorEl.textContent = "Couldn't save settings: " + chrome.runtime.lastError.message;
+        errorEl.hidden = false;
+        return;
+      }
+      closeSettingsModal();
+      showToast("GeoHelper: settings saved");
+    });
   }
 
   async function handleCheckForUpdates() {

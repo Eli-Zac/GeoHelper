@@ -1,12 +1,15 @@
 name: Auto Tag Release
 
-# Runs after every push to main (i.e. every merged, reviewed PR). If
-# manifest.json's version was bumped as part of that PR and no tag for
-# it exists yet, tags main at that version and calls the Release
-# workflow directly (as a job in this run, not via the tag push —
-# GITHUB_TOKEN-authored pushes don't trigger other workflows, so
-# relying on that would silently never fire). Nobody hand-pushes
-# release tags: every release traces back to a reviewed, merged PR.
+# Runs after every push to main (i.e. every merged, reviewed PR). Tags
+# and releases only when this push actually bumped manifest.json's
+# version (compared against the commit before the push) and no tag for
+# the new version exists yet — an unrelated merge (docs, etc.) that
+# happens to land while the last version is still untagged must not
+# publish a release. Calls the Release workflow directly (as a job in
+# this run, not via the tag push — GITHUB_TOKEN-authored pushes don't
+# trigger other workflows, so relying on that would silently never
+# fire). Nobody hand-pushes release tags: every release traces back to
+# a reviewed, merged PR.
 
 on:
   push:
@@ -40,10 +43,24 @@ jobs:
           if git rev-parse "$tag" >/dev/null 2>&1; then
             echo "Tag $tag already exists; nothing to release."
             echo "should_tag=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_tag=true" >> "$GITHUB_OUTPUT"
-            echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ]; then
+            previous_version=""
+          else
+            previous_version=$(git show "$before:manifest.json" 2>/dev/null | jq -r .version 2>/dev/null || echo "")
+          fi
+
+          if [ "$version" = "$previous_version" ]; then
+            echo "manifest.json version was not bumped in this push; skipping release."
+            echo "should_tag=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_tag=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       - name: Create and push tag
         if: steps.check.outputs.should_tag == 'true'
