@@ -185,7 +185,9 @@
       let [lat, lng] = loc;
       let offsetKm = 0;
       if (opts.offset) {
-        offsetKm = 1 + Math.random() * 99;
+        const min = Number.isFinite(opts.offsetMinKm) ? opts.offsetMinKm : 1;
+        const max = Number.isFinite(opts.offsetMaxKm) ? opts.offsetMaxKm : 100;
+        offsetKm = min + Math.random() * Math.max(0, max - min);
         [lat, lng] = destination(lat, lng, offsetKm, Math.random() * 360);
       }
       const latlng = window.L.latLng(lat, lng);

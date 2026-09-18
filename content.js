@@ -4,6 +4,36 @@
   const LOCATE_ID = "gg-shot-locate-btn";
   const OFFSET_TOGGLE_ID = "gg-shot-offset-toggle";
   const AUTOPLAY_ID = "gg-shot-autoplay-btn";
+  const SETTINGS_BTN_ID = "gg-settings-btn";
+  const SETTINGS_MODAL_ID = "gg-settings-modal";
+
+  const SETTINGS_STORAGE_KEY = "geohelperSettings";
+  const DEFAULT_SETTINGS = {
+    offsetMinKm: 1,
+    offsetMaxKm: 100,
+    guessDelayMinS: 5,
+    guessDelayMaxS: 15,
+  };
+
+  let settings = { ...DEFAULT_SETTINGS };
+  // Opening/saving the settings modal awaits this so a click right after
+  // page load can't open (and then overwrite) it with stale defaults.
+  const settingsReady = new Promise((resolve) => {
+    chrome.storage.local.get(SETTINGS_STORAGE_KEY, (items) => {
+      settings = { ...DEFAULT_SETTINGS, ...(items[SETTINGS_STORAGE_KEY] || {}) };
+      resolve();
+    });
+  });
+
+  const SLIDERS_SVG =
+    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<line x1="4" y1="6" x2="20" y2="6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+    '<line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+    '<line x1="4" y1="18" x2="20" y2="18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
+    '<circle cx="9" cy="6" r="2" fill="currentColor"/>' +
+    '<circle cx="16" cy="12" r="2" fill="currentColor"/>' +
+    '<circle cx="10" cy="18" r="2" fill="currentColor"/>' +
+    "</svg>";
 
   const PIN_SVG =
     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
@@ -86,6 +116,35 @@
 
     injectLocateControls();
     injectAutoplayToggle();
+    injectSettingsMenuButton();
+  }
+
+  // Docks a "GeoHelper" button into OpenGuessr's own native Menu ⋮
+  // dropdown, as a full-width entry at the bottom of the same group as
+  // Multiplayer/Competitions/Maps (.navigation-box, but not the
+  // icon-only .navigation-icon-row beneath it). That group only exists
+  // in the DOM while the dropdown is open, so this re-runs (via the
+  // same MutationObserver that drives injectButton) each time it's
+  // opened.
+  function injectSettingsMenuButton() {
+    if (!IS_OPENGUESSR) return;
+    if (document.getElementById(SETTINGS_BTN_ID)) return;
+    const navBox = document.querySelector(".navigation-box:not(.navigation-icon-row)");
+    if (!navBox) return;
+
+    const btn = document.createElement("button");
+    btn.id = SETTINGS_BTN_ID;
+    btn.type = "button";
+    btn.className = "standard-button white navigation-button large-button";
+    btn.title = "GeoHelper settings";
+    btn.innerHTML = SLIDERS_SVG + '<span style="margin-left: 6px;">GeoHelper</span>';
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      await settingsReady;
+      openSettingsModal();
+    });
+    navBox.appendChild(btn);
   }
 
   function injectNativeButton(container) {
@@ -185,7 +244,13 @@
         { once: true }
       );
       window.dispatchEvent(
-        new CustomEvent("geohelper-locate", { detail: JSON.stringify({ offset: offsetMode }) })
+        new CustomEvent("geohelper-locate", {
+          detail: JSON.stringify({
+            offset: offsetMode,
+            offsetMinKm: settings.offsetMinKm,
+            offsetMaxKm: settings.offsetMaxKm,
+          }),
+        })
       );
     });
   }
@@ -641,8 +706,13 @@
   // round, press Guess; on
   // the results screen wait a random CONTINUE_DELAY and press Continue
   // (#next-round) to start the next round.
-  const GUESS_DELAY_MS = [5000, 15000];
   const CONTINUE_DELAY_MS = [2000, 4000];
+
+  // Configurable via the GeoHelper settings modal (settings.guessDelayMinS/
+  // guessDelayMaxS), read fresh each time a guess is scheduled.
+  function guessDelayRangeMs() {
+    return [settings.guessDelayMinS * 1000, settings.guessDelayMaxS * 1000];
+  }
 
   const autoplay = {
     on: false,
@@ -762,11 +832,179 @@
     const guessBtn = document.getElementById("confirm-button");
     if (findPanoramaElement() && isVisible(guessBtn) && autoplay.handledRound !== roundSeq) {
       autoplay.handledRound = roundSeq;
-      schedule("guess", GUESS_DELAY_MS, autoGuess);
+      schedule("guess", guessDelayRangeMs(), autoGuess);
     }
   }
 
   setInterval(autoplayTick, 500);
+
+  // ---- Settings modal -------------------------------
+
+  // Drops any existing modal instantly, with no close animation — used
+  // to reset state before opening a fresh one.
+  function removeSettingsModal() {
+    const existing = document.getElementById(SETTINGS_MODAL_ID);
+    if (existing) existing.remove();
+  }
+
+  // Mirrors OpenGuessr's own popup: reverses the open transition
+  // (opacity/transform, 0.25s ease — matched from its .ui-window's
+  // computed transition) before removing the element, with a fallback
+  // timeout in case transitionend doesn't fire (e.g. reduced motion).
+  function closeSettingsModal() {
+    const overlay = document.getElementById(SETTINGS_MODAL_ID);
+    if (!overlay) return;
+    const modal = overlay.querySelector(".gg-settings-modal");
+    if (!modal) {
+      overlay.remove();
+      return;
+    }
+    const remove = () => overlay.remove();
+    modal.classList.add("gg-settings-leave");
+    modal.addEventListener("transitionend", remove, { once: true });
+    setTimeout(remove, 300);
+  }
+
+  function validateSettingsInput({ offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS }) {
+    if (![offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS].every(Number.isFinite)) {
+      return "All fields must be numbers.";
+    }
+    if (offsetMinKm < 0 || offsetMaxKm < 0 || guessDelayMinS < 0 || guessDelayMaxS < 0) {
+      return "Values can't be negative.";
+    }
+    if (offsetMinKm > offsetMaxKm) return "Min offset can't be greater than max offset.";
+    if (guessDelayMinS > guessDelayMaxS) return "Min wait time can't be greater than max wait time.";
+    if (offsetMaxKm > 20000) return "Max offset can't exceed 20000 km.";
+    if (guessDelayMaxS > 3600) return "Max wait time can't exceed 3600 seconds.";
+    return null;
+  }
+
+  function saveSettingsFromModal() {
+    const offsetMinKm = Number(document.getElementById("gg-set-offset-min").value);
+    const offsetMaxKm = Number(document.getElementById("gg-set-offset-max").value);
+    const guessDelayMinS = Number(document.getElementById("gg-set-delay-min").value);
+    const guessDelayMaxS = Number(document.getElementById("gg-set-delay-max").value);
+
+    const error = validateSettingsInput({ offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS });
+    const errorEl = document.getElementById("gg-settings-error");
+    if (error) {
+      errorEl.textContent = error;
+      errorEl.hidden = false;
+      return;
+    }
+
+    settings = { offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS };
+    chrome.storage.local.set({ [SETTINGS_STORAGE_KEY]: settings }, () => {
+      if (chrome.runtime.lastError) {
+        errorEl.textContent = "Couldn't save settings: " + chrome.runtime.lastError.message;
+        errorEl.hidden = false;
+        return;
+      }
+      closeSettingsModal();
+      showToast("GeoHelper: settings saved");
+    });
+  }
+
+  async function handleCheckForUpdates() {
+    const statusEl = document.getElementById("gg-settings-update-status");
+    statusEl.textContent = "Checking…";
+    try {
+      const result = await new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage({ action: "checkForUpdates" }, (response) => {
+          if (chrome.runtime.lastError) {
+            reject(new Error(chrome.runtime.lastError.message));
+            return;
+          }
+          if (response && response.error) {
+            reject(new Error(response.error));
+            return;
+          }
+          resolve(response);
+        });
+      });
+      statusEl.innerHTML = result.isNewer
+        ? `Update available: v${result.latestVersion} — <a href="${result.htmlUrl}" target="_blank" rel="noopener noreferrer">Get it</a>`
+        : "You're up to date.";
+    } catch (err) {
+      statusEl.textContent = "Couldn't check for updates: " + err.message;
+    }
+  }
+
+  function openSettingsModal() {
+    removeSettingsModal();
+
+    const overlay = document.createElement("div");
+    overlay.id = SETTINGS_MODAL_ID;
+    overlay.className = "gg-settings-overlay";
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeSettingsModal();
+    });
+
+    // Markup/classes mirror OpenGuessr's own Settings popup (.ui-window,
+    // its section-header + divider pattern, .settings-box rows) so this
+    // reads as part of the game's UI rather than a foreign overlay. See
+    // the matching rules in content.css.
+    const modal = document.createElement("div");
+    modal.className = "gg-settings-modal";
+    modal.innerHTML =
+      '<div class="gg-settings-header">' +
+      "<h2>GeoHelper settings</h2>" +
+      '<button type="button" class="gg-settings-close" id="gg-settings-close" aria-label="Close">' +
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+      '<path d="M5 5L19 19M19 5L5 19" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>' +
+      "</svg>" +
+      "</button>" +
+      "</div>" +
+      '<div class="gg-settings-section"><span>Safe mode</span><div class="gg-settings-line"></div></div>' +
+      '<div class="gg-settings-row">' +
+      '<p class="gg-settings-row-title">Offset (km)</p>' +
+      '<div class="gg-settings-inputs">' +
+      `<input type="number" id="gg-set-offset-min" min="0" step="1" value="${settings.offsetMinKm}">` +
+      "<span>to</span>" +
+      `<input type="number" id="gg-set-offset-max" min="0" step="1" value="${settings.offsetMaxKm}">` +
+      "</div>" +
+      "</div>" +
+      '<div class="gg-settings-section"><span>Autoplay</span><div class="gg-settings-line"></div></div>' +
+      '<div class="gg-settings-row">' +
+      '<p class="gg-settings-row-title">Wait time (seconds)</p>' +
+      '<div class="gg-settings-inputs">' +
+      `<input type="number" id="gg-set-delay-min" min="0" step="1" value="${settings.guessDelayMinS}">` +
+      "<span>to</span>" +
+      `<input type="number" id="gg-set-delay-max" min="0" step="1" value="${settings.guessDelayMaxS}">` +
+      "</div>" +
+      "</div>" +
+      '<p class="gg-settings-error" id="gg-settings-error" hidden></p>' +
+      '<div class="gg-settings-actions">' +
+      '<button type="button" class="standard-button white" id="gg-settings-save">Save</button>' +
+      '<button type="button" class="standard-button white" id="gg-settings-cancel">Cancel</button>' +
+      "</div>" +
+      '<div class="gg-settings-section"><span>About</span><div class="gg-settings-line"></div></div>' +
+      '<div class="gg-settings-row">' +
+      '<p class="gg-settings-row-title">Version ' +
+      chrome.runtime.getManifest().version +
+      "</p>" +
+      '<div class="gg-settings-inputs">' +
+      '<button type="button" class="standard-button white" id="gg-settings-check-update">Check for updates</button>' +
+      "</div>" +
+      "</div>" +
+      '<p class="gg-settings-update-status" id="gg-settings-update-status"></p>';
+
+    modal.classList.add("gg-settings-enter");
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    // Double rAF: the "enter" (pre-transition) styles need to actually
+    // paint before removing the class, or the browser coalesces both
+    // style changes into one frame and the transition never plays.
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => modal.classList.remove("gg-settings-enter"));
+    });
+
+    modal.querySelector("#gg-settings-close").addEventListener("click", closeSettingsModal);
+    modal.querySelector("#gg-settings-cancel").addEventListener("click", closeSettingsModal);
+    modal.querySelector("#gg-settings-save").addEventListener("click", saveSettingsFromModal);
+    modal.querySelector("#gg-settings-check-update").addEventListener("click", handleCheckForUpdates);
+  }
 
   injectButton();
 
