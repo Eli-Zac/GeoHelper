@@ -173,3 +173,178 @@
 .gg-autoplay[aria-pressed="true"] .gg-offset-thumb {
   transform: translateX(14px);
 }
+
+/* "GeoHelper" entry in the Menu dropdown's Multiplayer/Competitions/Maps
+   group. That group is a row-wrap flexbox (justify-content: end); each
+   of the site's own buttons fills its own row via flex-basis: 100% +
+   flex-grow: 1 (their scoped width:100% rule doesn't apply to us since
+   we don't carry their Svelte scoping class), so match that directly
+   rather than relying on a plain width, which the "end"-justified wrap
+   would otherwise right-align at content width instead of stretching. */
+#gg-settings-btn {
+  flex-basis: 100%;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+/* Settings modal, opened from the "GeoHelper" button docked into
+   OpenGuessr's own Menu dropdown. Structure and values (card, section
+   header + divider line, row, segmented-style bits) are copied from
+   OpenGuessr's own Settings popup (.popup-holder/.ui-window/
+   .settings-box/.line, inspected via computed styles) so this reads as
+   part of the game's UI rather than a foreign overlay. Max z-index so
+   it sits above the native Menu dropdown, which stays open behind it —
+   same as the site's own Settings panel does. */
+.gg-settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  background: rgba(30, 30, 30, 0.7);
+  backdrop-filter: blur(5px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gg-settings-modal {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: rgba(30, 34, 53, 0.7);
+  color: #fff;
+  border-radius: 25px;
+  padding: 20px;
+  font-family: "Barlow", sans-serif;
+  box-shadow:
+    0 2px 100px rgba(5, 6, 10, 0.5),
+    inset 0 0.8px 1px rgba(255, 255, 255, 0.2),
+    inset 0 -3.2px 1px rgba(0, 0, 2, 0.2);
+  /* Matches the computed transition on OpenGuessr's own .ui-window
+     (its Settings/Multiplayer/etc. popup card) exactly. */
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.gg-settings-modal.gg-settings-enter,
+.gg-settings-modal.gg-settings-leave {
+  opacity: 0;
+  transform: scale(0.95) translateY(8px);
+}
+
+.gg-settings-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.gg-settings-modal h2 {
+  margin: 0;
+  font-size: 32px;
+  font-weight: 400;
+  color: #fff;
+}
+
+.gg-settings-close {
+  flex-shrink: 0;
+  width: 36px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.176);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Section header: label + a divider line filling the rest of the row,
+   matching the site's own "Singleplayer"/"Audio"/"General" headers. */
+.gg-settings-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 0 10px;
+}
+
+.gg-settings-section span {
+  font-size: 20px;
+  font-weight: 400;
+  color: #fff;
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+.gg-settings-line {
+  flex: 1 1 auto;
+  height: 2px;
+  background: #fff;
+  opacity: 0.15;
+}
+
+.gg-settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.gg-settings-row-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 400;
+  color: #fff;
+}
+
+.gg-settings-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.gg-settings-inputs span {
+  font-size: 14px;
+  opacity: 0.7;
+}
+
+.gg-settings-inputs input {
+  width: 64px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font: inherit;
+  text-align: center;
+}
+
+.gg-settings-error {
+  color: #ff7b7b;
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+
+.gg-settings-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.gg-settings-update-status {
+  margin: 8px 2px 0;
+  font-size: 13px;
+  opacity: 0.9;
+  min-height: 1em;
+}
+
+.gg-settings-update-status a {
+  color: #6fb6ff;
+}
