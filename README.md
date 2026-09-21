@@ -43,7 +43,7 @@ listener Chrome installs new versions once the extension goes idle.
 
 ## Development
 
-No build step — `manifest.json`, `background.js`, `content.js`, `content.css`, and `locate.js` are loaded as-is. After editing, hit the reload icon for the extension on `chrome://extensions`.
+No build step — `manifest.json`, `background.js`, `content.js`, `content.css`, `locate.js`, and `icons/` are loaded as-is. The icons are generated, not hand-drawn; replace them with anything you like at the same four sizes. After editing, hit the reload icon for the extension on `chrome://extensions`.
 
 ## Releasing
 
