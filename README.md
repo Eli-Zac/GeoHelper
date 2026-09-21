@@ -55,3 +55,7 @@ Releases go out only through a reviewed, merged PR — nobody hand-pushes a rele
 4. Since a `GITHUB_TOKEN`-authored tag push doesn't trigger other workflows, `Auto Tag Release` then calls the `Release` workflow directly (as a reusable workflow, in-process) with that tag, which builds a zip with `manifest.json`'s version set to match the tag and publishes it as a GitHub Release.
 
 Because the tag is only ever created from `main`, and `main` only moves via a reviewed PR (branch protection enforces this), every release traces back to a PR your other dev signed off on. A PR that doesn't bump `manifest.json`'s version just merges normally with no release.
+
+## Privacy
+
+GeoHelper collects no data. See [PRIVACY.md](PRIVACY.md).
