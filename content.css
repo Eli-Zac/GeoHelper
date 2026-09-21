@@ -426,6 +426,11 @@
   margin-bottom: 4px;
 }
 
+#gg-settings-check-update:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .gg-settings-update-status {
   margin: 8px 2px 0;
   font-size: 13px;

@@ -51,7 +51,7 @@ jobs:
         run: |
           mkdir -p dist
           zip -r "dist/geohelper-${{ steps.version.outputs.version }}.zip" \
-            manifest.json background.js content.js content.css locate.js
+            manifest.json background.js content.js content.css locate.js icons
 
       - name: Create GitHub release
         env:
