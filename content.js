@@ -865,6 +865,20 @@
     setTimeout(remove, 300);
   }
 
+  // close modal on esc press
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "Escape") return;
+      const overlay = document.getElementById(SETTINGS_MODAL_ID);
+      if (!overlay || overlay.querySelector(".gg-settings-leave")) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      closeSettingsModal();
+    },
+    true,
+  );
+
   function validateSettingsInput({ offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS }) {
     if (![offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS].every(Number.isFinite)) {
       return "All fields must be numbers.";
