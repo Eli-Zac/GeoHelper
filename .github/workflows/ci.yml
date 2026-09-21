@@ -25,6 +25,17 @@ jobs:
             fi
           done
 
+      # The Chrome Web Store rejects an upload whose description exceeds
+      # 132 characters, so catch it here rather than at upload time.
+      - name: Check manifest description length
+        run: |
+          description=$(jq -r '.description // empty' manifest.json)
+          length=${#description}
+          if [ "$length" -gt 132 ]; then
+            echo "manifest.json description is $length characters; the Chrome Web Store allows at most 132." >&2
+            exit 1
+          fi
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
