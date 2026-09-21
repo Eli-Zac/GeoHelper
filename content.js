@@ -865,6 +865,18 @@
     setTimeout(remove, 300);
   }
 
+  // close modal on esc press
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if (e.key !== "Escape" || !document.getElementById(SETTINGS_MODAL_ID)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeSettingsModal();
+    },
+    true,
+  );
+
   function validateSettingsInput({ offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS }) {
     if (![offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS].every(Number.isFinite)) {
       return "All fields must be numbers.";
