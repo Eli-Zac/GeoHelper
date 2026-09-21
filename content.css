@@ -420,12 +420,6 @@
   margin: 0 0 10px;
 }
 
-.gg-settings-actions {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
 #gg-settings-check-update:disabled {
   opacity: 0.55;
   cursor: default;
