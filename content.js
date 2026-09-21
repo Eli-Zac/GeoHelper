@@ -851,7 +851,7 @@
   // (opacity/transform, 0.25s ease — matched from its .ui-window's
   // computed transition) before removing the element, with a fallback
   // timeout in case transitionend doesn't fire (e.g. reduced motion).
-  function closeSettingsModal() {
+  function finishClosingSettingsModal() {
     const overlay = document.getElementById(SETTINGS_MODAL_ID);
     if (!overlay) return;
     const modal = overlay.querySelector(".gg-settings-modal");
@@ -893,7 +893,7 @@
     return null;
   }
 
-  function saveSettingsFromModal() {
+  function persistSettingsFromModal(onSaved) {
     const offsetMinKm = Number(document.getElementById("gg-set-offset-min").value);
     const offsetMaxKm = Number(document.getElementById("gg-set-offset-max").value);
     const guessDelayMinS = Number(document.getElementById("gg-set-delay-min").value);
@@ -914,9 +914,13 @@
         errorEl.hidden = false;
         return;
       }
-      closeSettingsModal();
-      showToast("GeoHelper: settings saved");
+      if (onSaved) onSaved();
     });
+  }
+
+  function closeSettingsModal() {
+    if (!document.getElementById(SETTINGS_MODAL_ID)) return;
+    persistSettingsFromModal(finishClosingSettingsModal);
   }
 
   // Renders "Update available: vX — Get it" without innerHTML, so the tag
@@ -1038,10 +1042,6 @@
       "</div>" +
       "</div>" +
       '<p class="gg-settings-error" id="gg-settings-error" hidden></p>' +
-      '<div class="gg-settings-actions">' +
-      '<button type="button" class="standard-button white" id="gg-settings-save">Save</button>' +
-      '<button type="button" class="standard-button white" id="gg-settings-cancel">Cancel</button>' +
-      "</div>" +
       '<div class="gg-settings-section"><span>About</span><div class="gg-settings-line"></div></div>' +
       '<div class="gg-settings-row">' +
       '<p class="gg-settings-row-title">Version ' +
@@ -1065,8 +1065,6 @@
     });
 
     modal.querySelector("#gg-settings-close").addEventListener("click", closeSettingsModal);
-    modal.querySelector("#gg-settings-cancel").addEventListener("click", closeSettingsModal);
-    modal.querySelector("#gg-settings-save").addEventListener("click", saveSettingsFromModal);
     modal.querySelector("#gg-settings-check-update").addEventListener("click", handleCheckForUpdates);
 
     [
@@ -1093,6 +1091,7 @@
         minValue.textContent = minInput.value;
         maxValue.value = maxInput.value;
         maxValue.textContent = maxInput.value;
+        persistSettingsFromModal();
       };
       minInput.addEventListener("input", () => update(minInput));
       maxInput.addEventListener("input", () => update(maxInput));
