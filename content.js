@@ -869,9 +869,11 @@
   document.addEventListener(
     "keydown",
     (e) => {
-      if (e.key !== "Escape" || !document.getElementById(SETTINGS_MODAL_ID)) return;
+      if (e.key !== "Escape") return;
+      const overlay = document.getElementById(SETTINGS_MODAL_ID);
+      if (!overlay || overlay.querySelector(".gg-settings-leave")) return;
       e.preventDefault();
-      e.stopPropagation();
+      e.stopImmediatePropagation();
       closeSettingsModal();
     },
     true,
