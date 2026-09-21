@@ -137,7 +137,7 @@
     btn.type = "button";
     btn.className = "standard-button white navigation-button large-button";
     btn.title = "GeoHelper settings";
-    btn.innerHTML = SLIDERS_SVG + '<span style="margin-left: 6px;">GeoHelper</span>';
+    btn.innerHTML = '<span>GeoHelper</span>' + SLIDERS_SVG;
     btn.addEventListener("click", async (e) => {
       e.preventDefault();
       e.stopPropagation();
@@ -958,19 +958,33 @@
       '<div class="gg-settings-section"><span>Safe mode</span><div class="gg-settings-line"></div></div>' +
       '<div class="gg-settings-row">' +
       '<p class="gg-settings-row-title">Offset (km)</p>' +
-      '<div class="gg-settings-inputs">' +
-      `<input type="number" id="gg-set-offset-min" min="0" step="1" value="${settings.offsetMinKm}">` +
-      "<span>to</span>" +
-      `<input type="number" id="gg-set-offset-max" min="0" step="1" value="${settings.offsetMaxKm}">` +
+      '<div class="gg-settings-ranges">' +
+      '<div class="gg-settings-range">' +
+      '<span class="gg-settings-range-label">Min</span>' +
+      `<input type="range" id="gg-set-offset-min" min="0" max="20000" step="1" value="${settings.offsetMinKm}">` +
+      '<output id="gg-set-offset-min-value">' + settings.offsetMinKm + "</output>" +
+      "</div>" +
+      '<div class="gg-settings-range">' +
+      '<span class="gg-settings-range-label">Max</span>' +
+      `<input type="range" id="gg-set-offset-max" min="0" max="20000" step="1" value="${settings.offsetMaxKm}">` +
+      '<output id="gg-set-offset-max-value">' + settings.offsetMaxKm + "</output>" +
+      "</div>" +
       "</div>" +
       "</div>" +
       '<div class="gg-settings-section"><span>Autoplay</span><div class="gg-settings-line"></div></div>' +
       '<div class="gg-settings-row">' +
       '<p class="gg-settings-row-title">Wait time (seconds)</p>' +
-      '<div class="gg-settings-inputs">' +
-      `<input type="number" id="gg-set-delay-min" min="0" step="1" value="${settings.guessDelayMinS}">` +
-      "<span>to</span>" +
-      `<input type="number" id="gg-set-delay-max" min="0" step="1" value="${settings.guessDelayMaxS}">` +
+      '<div class="gg-settings-ranges">' +
+      '<div class="gg-settings-range">' +
+      '<span class="gg-settings-range-label">Min</span>' +
+      `<input type="range" id="gg-set-delay-min" min="0" max="3600" step="1" value="${settings.guessDelayMinS}">` +
+      '<output id="gg-set-delay-min-value">' + settings.guessDelayMinS + "</output>" +
+      "</div>" +
+      '<div class="gg-settings-range">' +
+      '<span class="gg-settings-range-label">Max</span>' +
+      `<input type="range" id="gg-set-delay-max" min="0" max="3600" step="1" value="${settings.guessDelayMaxS}">` +
+      '<output id="gg-set-delay-max-value">' + settings.guessDelayMaxS + "</output>" +
+      "</div>" +
       "</div>" +
       "</div>" +
       '<p class="gg-settings-error" id="gg-settings-error" hidden></p>' +
@@ -1004,6 +1018,36 @@
     modal.querySelector("#gg-settings-cancel").addEventListener("click", closeSettingsModal);
     modal.querySelector("#gg-settings-save").addEventListener("click", saveSettingsFromModal);
     modal.querySelector("#gg-settings-check-update").addEventListener("click", handleCheckForUpdates);
+
+    [
+      ["gg-set-offset-min", "gg-set-offset-max", "gg-set-offset-min-value", "gg-set-offset-max-value"],
+      ["gg-set-delay-min", "gg-set-delay-max", "gg-set-delay-min-value", "gg-set-delay-max-value"],
+    ].forEach(([minId, maxId, minValueId, maxValueId]) => {
+      const minInput = modal.querySelector("#" + minId);
+      const maxInput = modal.querySelector("#" + maxId);
+      const minValue = modal.querySelector("#" + minValueId);
+      const maxValue = modal.querySelector("#" + maxValueId);
+      const update = (changedInput) => {
+        if (Number(minInput.value) > Number(maxInput.value)) {
+          if (changedInput === minInput) maxInput.value = minInput.value;
+          else minInput.value = maxInput.value;
+        }
+        const setProgress = (input) => {
+          const range = Number(input.max) - Number(input.min);
+          const progress = range ? ((Number(input.value) - Number(input.min)) / range) * 100 : 0;
+          input.style.setProperty("--range-progress", progress + "%");
+        };
+        setProgress(minInput);
+        setProgress(maxInput);
+        minValue.value = minInput.value;
+        minValue.textContent = minInput.value;
+        maxValue.value = maxInput.value;
+        maxValue.textContent = maxInput.value;
+      };
+      minInput.addEventListener("input", () => update(minInput));
+      maxInput.addEventListener("input", () => update(maxInput));
+      update(minInput);
+    });
   }
 
   injectButton();
