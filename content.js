@@ -919,12 +919,31 @@
     });
   }
 
+  // Renders "Update available: vX — Get it" without innerHTML, so the tag
+  // name and URL coming back from the GitHub API stay inert text/attributes.
+  function renderManualUpdate(statusEl, result) {
+    statusEl.textContent = "";
+    if (!result.isNewer) {
+      statusEl.textContent = "You're up to date.";
+      return;
+    }
+    statusEl.append(`Update available: v${result.latestVersion} — `);
+    const link = document.createElement("a");
+    link.href = result.htmlUrl;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = "Get it";
+    statusEl.append(link);
+  }
+
   async function handleCheckForUpdates() {
     const statusEl = document.getElementById("gg-settings-update-status");
+    const button = document.getElementById("gg-settings-check-update");
     statusEl.textContent = "Checking…";
+    if (button) button.disabled = true;
     try {
       const result = await new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage({ action: "checkForUpdates" }, (response) => {
+        chrome.runtime.sendMessage({ action: "updateNow" }, (response) => {
           if (chrome.runtime.lastError) {
             reject(new Error(chrome.runtime.lastError.message));
             return;
@@ -936,12 +955,29 @@
           resolve(response);
         });
       });
-      statusEl.innerHTML = result.isNewer
-        ? `Update available: v${result.latestVersion} — <a href="${result.htmlUrl}" target="_blank" rel="noopener noreferrer">Get it</a>`
-        : "You're up to date.";
+
+      if (result.outcome === "updating") {
+        // The extension is about to restart into the new version, which
+        // tears this content script down with it. This is the last thing
+        // we get to say, and the button stays disabled on the way out.
+        const version = result.version ? ` to v${result.version}` : "";
+        statusEl.textContent = `Updating${version}… refresh this page once it's done.`;
+        return;
+      }
+
+      if (result.outcome === "throttled") {
+        statusEl.textContent = "Chrome is rate-limiting update checks — try again in a few minutes.";
+      } else if (result.outcome === "manual") {
+        // Unpacked install: Chrome has no update channel for it, so the
+        // best we can do is say a newer release exists and link to it.
+        renderManualUpdate(statusEl, result);
+      } else {
+        statusEl.textContent = "You're up to date.";
+      }
     } catch (err) {
       statusEl.textContent = "Couldn't check for updates: " + err.message;
     }
+    if (button) button.disabled = false;
   }
 
   function openSettingsModal() {
@@ -1012,7 +1048,7 @@
       chrome.runtime.getManifest().version +
       "</p>" +
       '<div class="gg-settings-inputs">' +
-      '<button type="button" class="standard-button white" id="gg-settings-check-update">Check for updates</button>' +
+      '<button type="button" class="standard-button white" id="gg-settings-check-update">Update</button>' +
       "</div>" +
       "</div>" +
       '<p class="gg-settings-update-status" id="gg-settings-update-status"></p>';

@@ -8,9 +8,38 @@ A Chrome extension for GeoGuessr and OpenGuessr that adds:
 
 ## Installing
 
+Install from the Chrome Web Store listing. Chrome then keeps the extension up
+to date on its own, and **Update** in GeoHelper's settings forces a check and
+installs a new version immediately.
+
+<details>
+<summary>Installing unpacked instead (development, or before the listing is live)</summary>
+
 1. Grab the latest zip from [Releases](../../releases).
 2. Unzip it.
 3. In Chrome, go to `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the unzipped folder.
+
+Chrome has no update channel for an unpacked copy, so **Update** falls back to
+comparing against the latest GitHub release and linking to it — you replace the
+folder yourself.
+
+</details>
+
+## Updating
+
+`background.js` decides which of the two it can do by checking whether
+`chrome.runtime.getManifest()` has an `update_url`, which Chrome only adds to
+extensions it installed itself:
+
+- **Store install** — `chrome.runtime.requestUpdateCheck()` asks Chrome to fetch
+  the new version, then `chrome.runtime.reload()` restarts into it. That tears
+  down every content script, so open game tabs need a refresh afterwards.
+- **Unpacked** — falls back to the GitHub Releases API and a download link.
+
+There's deliberately no `chrome.runtime.onUpdateAvailable` listener: registering
+one makes Chrome hold updates back until the extension calls `reload()` itself,
+and restarting unprompted would kill an Autoplay run mid-round. Without a
+listener Chrome installs new versions once the extension goes idle.
 
 ## Development
 

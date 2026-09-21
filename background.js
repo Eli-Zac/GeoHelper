@@ -106,10 +106,65 @@ async function checkForUpdates() {
   };
 }
 
+// Chrome injects an "update_url" into the manifest of every extension it
+// installed itself (the Web Store's own CRX endpoint). A "Load unpacked"
+// copy has no such field — and no update channel — so this is how we tell
+// whether Chrome can actually install an update for us or whether all we
+// can do is point at the release page.
+function isStoreManaged() {
+  return Boolean(chrome.runtime.getManifest().update_url);
+}
+
+// Normalizes the two callback shapes this API has had: MV2 passed
+// (status, details), MV3 passes a single { status, version } object.
+// Reading whichever arrived keeps this working across Chrome versions.
+function requestUpdateCheck() {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.requestUpdateCheck((...args) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+        return;
+      }
+      const [first, second] = args;
+      if (first && typeof first === "object") {
+        resolve({ status: first.status, version: first.version || "" });
+        return;
+      }
+      resolve({ status: first, version: (second && second.version) || "" });
+    });
+  });
+}
+
+// Deliberately no chrome.runtime.onUpdateAvailable listener: registering one
+// makes Chrome hold the update back until we call reload() ourselves, and
+// reloading unprompted would kill an in-progress Autoplay run mid-round.
+// Without a listener Chrome installs the new version on its own once the
+// extension goes idle, and the button below forces it to happen now.
+async function installUpdate() {
+  const currentVersion = chrome.runtime.getManifest().version;
+
+  if (!isStoreManaged()) {
+    const info = await checkForUpdates();
+    return { outcome: "manual", ...info };
+  }
+
+  const { status, version } = await requestUpdateCheck();
+  if (status === "throttled") return { outcome: "throttled", currentVersion };
+  if (status !== "update_available") return { outcome: "up_to_date", currentVersion };
+  return { outcome: "updating", version, currentVersion };
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.action === "checkForUpdates") {
-    checkForUpdates()
-      .then((result) => sendResponse(result))
+  if (msg.action === "updateNow") {
+    installUpdate()
+      .then((result) => {
+        sendResponse(result);
+        // reload() tears down this worker along with every content script,
+        // so it has to come after the response is already on its way out.
+        if (result.outcome === "updating") {
+          setTimeout(() => chrome.runtime.reload(), 250);
+        }
+      })
       .catch((err) => sendResponse({ error: err.message }));
     return true; // keep the message channel open for the async response
   }
