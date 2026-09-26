@@ -61,3 +61,53 @@ jobs:
             "dist/geohelper-${{ steps.version.outputs.version }}.zip" \
             --title "GeoHelper ${{ steps.version.outputs.version }}" \
             --generate-notes
+
+      - name: Publish to Chrome Web Store
+        env:
+          CWS_CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CWS_CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          CWS_REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+          CWS_EXTENSION_ID: ${{ vars.CWS_EXTENSION_ID }}
+        run: |
+          access_token=$(curl -sS -X POST https://oauth2.googleapis.com/token \
+            -d client_id="$CWS_CLIENT_ID" \
+            -d client_secret="$CWS_CLIENT_SECRET" \
+            -d refresh_token="$CWS_REFRESH_TOKEN" \
+            -d grant_type=refresh_token \
+            | jq -r '.access_token')
+
+          if [ -z "$access_token" ] || [ "$access_token" = "null" ]; then
+            echo "Failed to obtain a Chrome Web Store access token." >&2
+            exit 1
+          fi
+
+          upload_response=$(curl -sS -X PUT \
+            -H "Authorization: Bearer $access_token" \
+            -H "x-goog-api-version: 2" \
+            -T "dist/geohelper-${{ steps.version.outputs.version }}.zip" \
+            "https://www.googleapis.com/upload/chromewebstore/v1.1/items/$CWS_EXTENSION_ID")
+
+          upload_state=$(echo "$upload_response" | jq -r '.uploadState // empty')
+          if [ "$upload_state" != "SUCCESS" ]; then
+            echo "Chrome Web Store upload failed:" >&2
+            echo "$upload_response" >&2
+            exit 1
+          fi
+
+          publish_response=$(curl -sS -X POST \
+            -H "Authorization: Bearer $access_token" \
+            -H "x-goog-api-version: 2" \
+            -H "Content-Length: 0" \
+            "https://www.googleapis.com/chromewebstore/v1.1/items/$CWS_EXTENSION_ID/publish")
+
+          publish_status=$(echo "$publish_response" | jq -r '.status[0] // empty')
+          case "$publish_status" in
+            OK|ITEM_PENDING_REVIEW)
+              echo "Chrome Web Store publish succeeded: $publish_status"
+              ;;
+            *)
+              echo "Chrome Web Store publish failed:" >&2
+              echo "$publish_response" >&2
+              exit 1
+              ;;
+          esac
