@@ -52,7 +52,9 @@ Releases go out only through a reviewed, merged PR — nobody hand-pushes a rele
 1. On a branch, bump `"version"` in `manifest.json` to the new version (Chrome extension versions are 1–4 dot-separated integers, e.g. `1.2.0`).
 2. Open a PR and get it reviewed and merged to `main`.
 3. Once merged, the `Auto Tag Release` workflow checks whether this push actually changed `manifest.json`'s version and whether a tag for it already exists; if so, it pushes `v1.2.0` to `main`.
-4. Since a `GITHUB_TOKEN`-authored tag push doesn't trigger other workflows, `Auto Tag Release` then calls the `Release` workflow directly (as a reusable workflow, in-process) with that tag, which builds a zip with `manifest.json`'s version set to match the tag and publishes it as a GitHub Release.
+4. Since a `GITHUB_TOKEN`-authored tag push doesn't trigger other workflows, `Auto Tag Release` then calls the `Release` workflow directly (as a reusable workflow, in-process) with that tag, which builds a zip with `manifest.json`'s version set to match the tag, publishes it as a GitHub Release, and uploads/publishes that same zip to the Chrome Web Store.
+
+The Chrome Web Store publish step authenticates with a Google OAuth client (`CWS_CLIENT_ID` / `CWS_CLIENT_SECRET`) and a refresh token (`CWS_REFRESH_TOKEN`) stored as repo secrets, targeting the item ID in the `CWS_EXTENSION_ID` repo variable. A successful call either publishes immediately or puts the item into `ITEM_PENDING_REVIEW`, depending on the store's review requirements at the time.
 
 Because the tag is only ever created from `main`, and `main` only moves via a reviewed PR (branch protection enforces this), every release traces back to a PR your other dev signed off on. A PR that doesn't bump `manifest.json`'s version just merges normally with no release.
 
