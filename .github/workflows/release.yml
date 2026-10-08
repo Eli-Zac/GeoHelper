@@ -16,6 +16,14 @@ on:
         description: "Tag to release (vX.Y.Z)"
         required: true
         type: string
+  # Manual retry of an existing tag's release from the Actions tab (a
+  # "Re-run" of an old run would use that run's original workflow file).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)release (vX.Y.Z)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -53,14 +61,22 @@ jobs:
           zip -r "dist/geohelper-${{ steps.version.outputs.version }}.zip" \
             manifest.json background.js content.js content.css locate.js icons
 
+      # Re-running a failed release (e.g. after fixing the Chrome Web Store
+      # secrets) must not trip over the release a previous attempt already
+      # created, so reuse it and just replace the zip.
       - name: Create GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$RELEASE_TAG" \
-            "dist/geohelper-${{ steps.version.outputs.version }}.zip" \
-            --title "GeoHelper ${{ steps.version.outputs.version }}" \
-            --generate-notes
+          zip="dist/geohelper-${{ steps.version.outputs.version }}.zip"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Release $RELEASE_TAG already exists; replacing its zip."
+            gh release upload "$RELEASE_TAG" "$zip" --clobber
+          else
+            gh release create "$RELEASE_TAG" "$zip" \
+              --title "GeoHelper ${{ steps.version.outputs.version }}" \
+              --generate-notes
+          fi
 
       - name: Publish to Chrome Web Store
         env:
