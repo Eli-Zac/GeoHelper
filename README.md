@@ -9,8 +9,8 @@ A Chrome extension for GeoGuessr and OpenGuessr that adds:
 ## Installing
 
 Install from the Chrome Web Store listing. Chrome then keeps the extension up
-to date on its own, and **Update** in GeoHelper's settings forces a check and
-installs a new version immediately.
+to date on its own. In OpenGuessr, **Check for updates** in the native Settings
+panel forces a check and installs a new version immediately.
 
 <details>
 <summary>Installing unpacked instead (development, or before the listing is live)</summary>
@@ -19,9 +19,9 @@ installs a new version immediately.
 2. Unzip it.
 3. In Chrome, go to `chrome://extensions`, enable **Developer mode**, click **Load unpacked**, and select the unzipped folder.
 
-Chrome has no update channel for an unpacked copy, so **Update** falls back to
-comparing against the latest GitHub release and linking to it — you replace the
-folder yourself.
+Chrome has no update channel for an unpacked copy, so **Check for updates** in
+OpenGuessr's Settings panel compares against the latest GitHub release and links
+to it — you replace the folder yourself.
 
 </details>
 
