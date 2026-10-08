@@ -1,10 +1,8 @@
-/* Only used as a fallback when the site's own bottom-left button bar
-   isn't found (e.g. GeoGuessr's DOM differs from OpenGuessr's). When
-   docked into that bar, the button uses the site's own "standard-button
-   white" classes and needs no styling from here. */
+/* Floating fallback button. OpenGuessr uses this to stay clear of Return;
+   GeoGuessr keeps the original bottom-left placement. */
 .gg-shot-floating {
   position: fixed;
-  bottom: 88px;
+  bottom: 16px;
   left: 16px;
   z-index: 999999;
   width: 44px;
@@ -18,6 +16,10 @@
   color: #fff;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
   cursor: pointer;
+}
+
+.gg-shot-floating.gg-openguessr {
+  bottom: 88px;
 }
 
 .gg-shot-floating:hover {
@@ -35,7 +37,7 @@
 
 #gg-shot-copy-toast {
   position: fixed;
-  bottom: 140px;
+  bottom: 68px;
   left: 16px;
   z-index: 999999;
   padding: 8px 14px;
@@ -48,6 +50,10 @@
   transform: translateY(4px);
   transition: opacity 0.15s ease, transform 0.15s ease;
   pointer-events: none;
+}
+
+#gg-shot-copy-toast.gg-openguessr {
+  bottom: 140px;
 }
 
 #gg-shot-copy-toast.gg-shot-toast-visible {
@@ -172,13 +178,7 @@
   transform: translateX(14px);
 }
 
-/* "GeoHelper" entry in the Menu dropdown's Multiplayer/Competitions/Maps
-   group. That group is a row-wrap flexbox (justify-content: end); each
-   of the site's own buttons fills its own row via flex-basis: 100% +
-   flex-grow: 1 (their scoped width:100% rule doesn't apply to us since
-   we don't carry their Svelte scoping class), so match that directly
-   rather than relying on a plain width, which the "end"-justified wrap
-   would otherwise right-align at content width instead of stretching. */
+/* GeoHelper controls inserted into OpenGuessr settings canvas */
 .gg-native-settings {
   display: flex;
   flex: 0 0 100%;

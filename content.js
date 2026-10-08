@@ -15,7 +15,6 @@
   };
 
   document.getElementById("gg-settings-btn")?.remove();
-  document.getElementById("gg-settings-gear-btn")?.remove();
   document.getElementById("gg-settings-modal")?.remove();
 
   let settings = { ...DEFAULT_SETTINGS };
@@ -246,6 +245,7 @@
     const btn = document.createElement("button");
     btn.id = BUTTON_ID;
     btn.className = "gg-shot-floating";
+    if (IS_OPENGUESSR) btn.classList.add("gg-openguessr");
     btn.setAttribute("aria-label", "GeoHelper: copy screenshot to clipboard");
     btn.title = "GeoHelper: copy screenshot to clipboard";
     btn.innerHTML = ICON_SVG;
@@ -329,6 +329,7 @@
       toast.id = TOAST_ID;
       document.body.appendChild(toast);
     }
+    toast.classList.toggle("gg-openguessr", IS_OPENGUESSR);
     toast.textContent = message;
     toast.classList.add("gg-shot-toast-visible");
     clearTimeout(showToast._t);
@@ -689,8 +690,8 @@
   // (#next-round) to start the next round.
   const CONTINUE_DELAY_MS = [2000, 4000];
 
-  // Configurable via the GeoHelper settings modal (settings.guessDelayMinS/
-  // guessDelayMaxS), read fresh each time a guess is scheduled.
+  // Configurable via the GeoHelper section of the OpenGuessr Settings
+  // panel, read fresh each time a guess is scheduled
   function guessDelayRangeMs() {
     return [settings.guessDelayMinS * 1000, settings.guessDelayMaxS * 1000];
   }
@@ -790,8 +791,8 @@
     );
   }
 
-  // Polled a couple of times a second while Autoplay is on; decides
-  // which step (if any) comes next based on what's on screen.
+  // Runs twice a second to keep the toggle attached as needed
+  // When autoplay is enabled, decides which step comes next from the current UI
   function autoplayTick() {
     injectAutoplayToggle();
     if (!autoplay.on) return;
@@ -820,7 +821,7 @@
 
   setInterval(autoplayTick, 500);
 
-  // ---- Settings modal -------------------------------
+  // ---- Settings panel --------------------------------
 
   function validateSettingsInput({ offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS }) {
     if (![offsetMinKm, offsetMaxKm, guessDelayMinS, guessDelayMaxS].every(Number.isFinite)) {
