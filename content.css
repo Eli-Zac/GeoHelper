@@ -4,7 +4,7 @@
    white" classes and needs no styling from here. */
 .gg-shot-floating {
   position: fixed;
-  bottom: 16px;
+  bottom: 88px;
   left: 16px;
   z-index: 999999;
   width: 44px;
@@ -35,7 +35,7 @@
 
 #gg-shot-copy-toast {
   position: fixed;
-  bottom: 68px;
+  bottom: 140px;
   left: 16px;
   z-index: 999999;
   padding: 8px 14px;
@@ -83,15 +83,13 @@
 .gg-offset-switch {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   flex-shrink: 0;
   white-space: nowrap;
-  padding-left: 4px;
   color: #fff;
   font-family: inherit; /* the site's own font (Barlow) */
   font-size: 16px;
   font-weight: 600;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
   cursor: pointer;
   user-select: none;
 }
@@ -124,7 +122,7 @@
 }
 
 .gg-offset-switch input:checked + .gg-offset-track {
-  background: #3fb950;
+  background: #ff151d;
 }
 
 .gg-offset-switch input:checked + .gg-offset-track .gg-offset-thumb {
@@ -167,7 +165,7 @@
 }
 
 .gg-autoplay[aria-pressed="true"] .gg-offset-track {
-  background: #3fb950;
+  background: #ff151d;
 }
 
 .gg-autoplay[aria-pressed="true"] .gg-offset-thumb {
@@ -181,176 +179,81 @@
    we don't carry their Svelte scoping class), so match that directly
    rather than relying on a plain width, which the "end"-justified wrap
    would otherwise right-align at content width instead of stretching. */
-#gg-settings-btn {
-  flex-basis: 100%;
-  flex-grow: 1;
+.gg-native-settings {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-inline: 15px;
-  text-align: left;
-}
-
-#gg-settings-btn > span {
-  text-align: left;
-}
-
-#gg-settings-btn > svg {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 20px;
-  margin-inline: 2px;
-  margin-bottom: -1px;
-}
-
-/* Settings modal, opened from the "GeoHelper" button docked into
-   OpenGuessr's own Menu dropdown. Structure and values (card, section
-   header + divider line, row, segmented-style bits) are copied from
-   OpenGuessr's own Settings popup (.popup-holder/.ui-window/
-   .settings-box/.line, inspected via computed styles) so this reads as
-   part of the game's UI rather than a foreign overlay. Max z-index so
-   it sits above the native Menu dropdown, which stays open behind it —
-   same as the site's own Settings panel does. */
-.gg-settings-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2147483647;
-  background: rgba(30, 30, 30, 0.7);
-  backdrop-filter: blur(5px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.gg-settings-modal {
-  width: min(480px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  background: rgba(30, 34, 53, 0.7);
+  flex: 0 0 100%;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
   color: #fff;
-  border-radius: 25px;
-  padding: 20px;
-  font-family: "Barlow", sans-serif;
-  box-shadow:
-    0 2px 100px rgba(5, 6, 10, 0.5),
-    inset 0 0.8px 1px rgba(255, 255, 255, 0.2),
-    inset 0 -3.2px 1px rgba(0, 0, 2, 0.2);
-  /* Matches the computed transition on OpenGuessr's own .ui-window
-     (its Settings/Multiplayer/etc. popup card) exactly. */
-  opacity: 1;
-  transform: scale(1) translateY(0);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  font-family: inherit;
 }
 
-.gg-settings-modal.gg-settings-enter,
-.gg-settings-modal.gg-settings-leave {
-  opacity: 0;
-  transform: scale(0.95) translateY(8px);
-}
-
-.gg-settings-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.gg-settings-modal h2 {
-  margin: 0;
-  font-size: 32px;
-  font-weight: 400;
-  color: #fff;
-}
-
-.gg-settings-close {
-  flex-shrink: 0;
-  width: 36px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 5px;
-  background: rgba(255, 255, 255, 0.176);
-  color: #fff;
-  cursor: pointer;
-}
-
-/* Section header: label + a divider line filling the rest of the row,
-   matching the site's own "Singleplayer"/"Audio"/"General" headers. */
-.gg-settings-section {
+.gg-native-settings-heading {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 16px 0 10px;
+  margin: 4px 0 0;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 600;
 }
 
-.gg-settings-section span {
-  font-size: 20px;
-  font-weight: 400;
-  color: #fff;
-  opacity: 0.5;
+.gg-native-settings-heading > span {
   white-space: nowrap;
 }
 
-.gg-settings-line {
-  flex: 1 1 auto;
+.gg-native-settings-heading > div {
+  flex: 1;
   height: 2px;
   background: #fff;
   opacity: 0.15;
 }
 
-.gg-settings-row {
+.gg-native-settings-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 10px;
+  gap: 16px;
+  min-width: 0;
   padding: 10px;
-  margin-bottom: 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
 }
 
-.gg-settings-row-title {
+.gg-native-settings-row > p {
   margin: 0;
-  font-size: 18px;
-  font-weight: 400;
   color: #fff;
+  font-size: 18px;
+  font-weight: 500;
 }
 
-.gg-settings-inputs {
+.gg-native-settings-ranges {
   display: flex;
-  align-items: center;
-  flex-shrink: 0;
-}
-
-.gg-settings-ranges {
-  display: flex;
+  flex: 0 1 310px;
   flex-direction: column;
   gap: 8px;
-  width: min(220px, 48%);
-  flex-shrink: 0;
+  min-width: 0;
 }
 
-.gg-settings-range {
+.gg-native-settings-range {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 42px;
+  grid-template-columns: 38px minmax(60px, 1fr) 48px;
   align-items: center;
-  column-gap: 10px;
+  gap: 8px;
 }
 
-.gg-settings-range-label {
-  font-size: 18px;
+.gg-native-settings-range label {
+  color: #fff;
+  font-size: 16px;
   opacity: 0.7;
-  white-space: nowrap;
 }
 
-.gg-settings-range input[type="range"] {
+.gg-native-settings-range input[type="range"] {
   --range-progress: 50%;
   appearance: none;
-  height: 8px;
   width: 100%;
+  height: 8px;
   margin: 6px 0;
   border-radius: 999px;
   outline: none;
@@ -358,19 +261,19 @@
     to right,
     #ff151d 0%,
     #ff151d var(--range-progress),
-    #5b5e69 var(--range-progress),
-    #5b5e69 100%
+    rgba(255, 255, 255, 0.2) var(--range-progress),
+    rgba(255, 255, 255, 0.2) 100%
   );
   cursor: pointer;
 }
 
-.gg-settings-range input[type="range"]::-webkit-slider-runnable-track {
+.gg-native-settings-range input[type="range"]::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 999px;
   background: transparent;
 }
 
-.gg-settings-range input[type="range"]::-webkit-slider-thumb {
+.gg-native-settings-range input[type="range"]::-webkit-slider-thumb {
   appearance: none;
   width: 20px;
   height: 20px;
@@ -381,19 +284,19 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
-.gg-settings-range input[type="range"]::-moz-range-track {
+.gg-native-settings-range input[type="range"]::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  background: #5b5e69;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.gg-settings-range input[type="range"]::-moz-range-progress {
+.gg-native-settings-range input[type="range"]::-moz-range-progress {
   height: 8px;
   border-radius: 999px;
   background: #ff151d;
 }
 
-.gg-settings-range input[type="range"]::-moz-range-thumb {
+.gg-native-settings-range input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
   border: none;
@@ -402,22 +305,26 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
-.gg-settings-range input[type="range"]:focus-visible {
+.gg-native-settings-range input[type="range"]:focus-visible {
   outline: 2px solid rgba(255, 255, 255, 0.8);
   outline-offset: 4px;
 }
 
-.gg-settings-range output {
+.gg-native-settings-range output {
   color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
-.gg-settings-error {
+.gg-native-settings-error {
+  margin: 0;
   color: #ff7b7b;
-  font-size: 13px;
-  margin: 0 0 10px;
+  font-size: 14px;
+}
+
+.gg-native-settings-about > p {
+  flex: 1;
 }
 
 #gg-settings-check-update:disabled {
@@ -425,13 +332,26 @@
   cursor: default;
 }
 
-.gg-settings-update-status {
-  margin: 8px 2px 0;
-  font-size: 13px;
+.gg-native-settings-status {
+  margin: 0 2px;
+  color: #fff;
+  font-size: 14px;
   opacity: 0.9;
-  min-height: 1em;
 }
 
-.gg-settings-update-status a {
+.gg-native-settings-status a {
   color: #6fb6ff;
+}
+
+@media (max-width: 560px) {
+  .gg-native-settings-row {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .gg-native-settings-ranges {
+    flex-basis: auto;
+    width: 100%;
+  }
 }
